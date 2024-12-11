@@ -43,9 +43,18 @@ class Categoria(models.Model):
         return self.nombre
 
 class Reporte(models.Model):
+    MOTIVOS = (
+        ('contenido_inapropiado', 'Contenido inapropiado'),
+        ('spam', 'Spam'),
+        ('violencia', 'Contenido violento'),
+        ('derechos_autor', 'Violación de derechos de autor'),
+        ('otro', 'Otro')
+    )
+
     dibujo = models.ForeignKey(Dibujo, on_delete=models.CASCADE, verbose_name="Dibujo que ha sio reportado")
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuario que ha reportado el dibujo")
-    motivo = models.TextField(max_length=256, verbose_name="Motivo del reporte")
+    motivo = models.TextField(max_length=256, choices = MOTIVOS ,verbose_name="Motivo del reporte")
+    descripcion = models.TextField(max_length=256, verbose_name="Descripción detallada", default='sin descripción')
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha del reporte")
 
     def __str__(self):

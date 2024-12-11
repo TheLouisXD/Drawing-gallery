@@ -5,7 +5,7 @@ from .models import Dibujo, Estrella, Comentario, Categoria, Reporte
 # sirven para poder devolver la informacion en diferentes formatos, como JSON, XML, etc.
 
 class DibujoSerializer(serializers.ModelSerializer):
-    total_estrellas = serializers.IntegerField(source='total_estrellas', read_only=True)
+    total_estrellas = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Dibujo
@@ -20,3 +20,6 @@ class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoria
         fields = '__all__'
+
+class DrawingCountSerializer(serializers.Serializer):
+    total_drawings = serializers.IntegerField()

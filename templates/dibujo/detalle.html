@@ -22,7 +22,9 @@
             <div class="col-md-4">
                 <div class="d-flex justify-content-between">
                     <h2>{{ dibujo.titulo }}</h2>
-                    <button class="btn btn-danger">reportar</button>
+                    <a href="{% url 'reportar_dibujo' dibujo.id %}" class="btn btn-danger">
+                        <i class="fas fa-flag"></i> Reportar
+                    </a>
                 </div>
                 <p>Por: {{ dibujo.usuario.username }}</p>
                 <p>Categoría: {{ dibujo.categoria.nombre }}</p>
@@ -69,6 +71,11 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <form action="{% url 'delete_dibujo' dibujo.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar Dibujo</button>
+                </form>
             </div>
         </div>
     </div>

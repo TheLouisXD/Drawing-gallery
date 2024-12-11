@@ -1,14 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from .models import Dibujo, Estrella, Comentario, Categoria, Reporte
-from .serializer import DibujoSerializer
+from .serializer import DibujoSerializer, DrawingCountSerializer
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 import base64
 from django.core.files.base import ContentFile
 
+import csv
 # Django filters
 from django_filters import views
 from django_filters import FilterSet, ModelChoiceFilter, OrderingFilter
@@ -155,3 +156,72 @@ def comentar_dibujo(request, dibujo_id):
             })
         
     return JsonResponse({'status': 'error'}, status = 400)
+
+@login_required
+def reportar_dibujo(request, dibujo_id):
+    dibujo = Dibujo.objects.get(id=dibujo_id)
+    
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo')
+        descripcion = request.POST.get('descripcion')
+
+        if motivo and descripcion:
+            reporte = Reporte.objects.create(
+                dibujo=dibujo,
+                usuario=request.user,
+                motivo=motivo,
+                descripcion=descripcion
+            )
+
+            return redirect('detalle_dibujo', dibujo_id)
+    
+    return render(request, 'dibujo/reportar.html', {'dibujo': dibujo})
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import Dibujo
+from .serializer import DrawingCountSerializer
+
+# Add this new view
+class DrawingCountView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        total_drawings = Dibujo.objects.count()
+        serializer = DrawingCountSerializer({'total_drawings': total_drawings})
+        return Response(serializer.data)
+    
+class DrawingListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        drawnings = Dibujo.objects.all()
+        serializer = DibujoSerializer(drawnings, many=True)
+        return Response(serializer.data)
+    
+def exportar_dibujos_page(request):
+    return render(request, 'administracion/exportar_dibujos.html')
+
+def exportar_dibujos(request):
+    dibujos = Dibujo.objects.all()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="dibujos.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['titulo', 'fecha_creacion', 'categoria', 'imagen'])
+
+    for dibujo in dibujos:
+        writer.writerow([
+            dibujo.titulo,
+            dibujo.fecha_creacion,
+            dibujo.categoria.nombre,
+            dibujo.imagen.url
+        ])
+
+    return response
+
+def delete_dibujo(request, dibujo_id):
+    dibujo = get_object_or_404(Dibujo, id=dibujo_id)
+    dibujo.delete()
+    return redirect('index')  # Redirige a la página principal o a donde prefieras
